@@ -188,6 +188,7 @@ namespace ConsoleApp {
 			using (var sr = new StreamReader(fn)) {
 				//TODO: DONE?
 				Name = sr.ReadLine();
+				if (Path.GetFileName(fn).Replace(".apm", "") != Name) Console.WriteLine("W: MacroName != filename");
 				Rect = sr.ReadLine().Split(' ').Select(x => int.Parse(x)).ToArray();
 				//var rect = new Func<string[], Rectangle>(x => new Rectangle(int.Parse(x[0]), int.Parse(x[1]), int.Parse(x[2]), int.Parse(x[3])))(sr.ReadLine().Split(' '));
 				TapPoint = new Func<string[], Point>(x => new Point(int.Parse(x[0]), int.Parse(x[1])))(sr.ReadLine().Split(' '));
