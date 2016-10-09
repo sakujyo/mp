@@ -170,7 +170,7 @@ namespace ConsoleApp {
 		}
 
 		public void Tap(Point p, int ms) {
-			pctrl.StandardInput.WriteLine("input touchscreen swipe {0} {1} {0} {1} {2}", p.X, p.Y, p.X, p.Y, ms);
+			pctrl.StandardInput.WriteLine("input touchscreen swipe {0} {1} {0} {1} {2}", p.X, p.Y, ms);
 		}
 		public void Tap(Point p) {
 			Tap(p, 50);
