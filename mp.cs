@@ -22,6 +22,9 @@ namespace ConsoleApp {
 			var f = new Form(); //var f = InitComponents("MultiPlay 2");
 			f.Text = "MultiPlay 2";	//f.Text = formTitle;
 			f.Size = new Size(200, 200);
+			f.Closed += (s, e) => {
+				players.ToList().ForEach(x => x.Dispose());
+			};
 
 			var t = new Timer();
 			t.Interval = 50;
@@ -65,10 +68,30 @@ namespace ConsoleApp {
 		public IEnumerable<string> MacroDirs { get; set; }
 
 		public void Init() {
-			foreach (var d in MacroDirs) { Console.WriteLine(d); }
+			foreach (var d in MacroDirs) { Console.WriteLine("MacroDir: {0}", d); }
+
+			//var files = Directory.GetFiles(path, "*").Where(x => x.EndsWith(".apm"));
+			var eMacroFiles= from d in MacroDirs
+				select Directory.GetFiles(d, "*")
+				into files
+				select from f in files
+				where f.EndsWith(".apm")
+				select f;
+			eMacroFiles.ToList().ForEach(x => x.ToList().ForEach(y => Console.WriteLine(y)));
+			macros = from f in eMacroFiles.SelectMany(x => x)
+				orderby Path.GetFileName(f)
+				select new Macro(f);
+
+			/*
 			var enumMacros = from d in MacroDirs
 				select GetMacros(d);
 			macros = enumMacros.SelectMany(x => x).ToArray();
+			*/
+			macros.ToList().ForEach(x => Console.WriteLine("Macro: {0}", x.Name));
+		}
+		
+		public void Dispose() {
+			pctrl.Kill();
 		}
 
 		public Player() {
@@ -144,7 +167,18 @@ namespace ConsoleApp {
 			}
 		}
 
-		public List<Macro> GetMacros(string path) {
+		public IEnumerable<Macro> GetMacros(string path) {
+		//public List<Macro> GetMacros(string path) {
+			//var files = Directory.GetFiles(path, "*.apm");
+			var files = Directory.GetFiles(path, "*").Where(x => x.EndsWith(".apm"));
+			Console.WriteLine("DEBUG 1");
+			files.ToList().ForEach(x => Console.WriteLine(x));
+			var f2 = files.Where(x => x.EndsWith("~") == false);
+			Console.WriteLine("DEBUG 2");
+			f2.ToList().ForEach(x => Console.WriteLine(x));
+			return files.Select(x => new Macro(x));
+			//return Directory.GetFiles(path, "*.apm").Select(x => new Macro(x));
+			/*
 			var result = new List<Macro>();
 			var files = Directory.GetFiles(path, "*.apm");
 			foreach (var f in files) {
@@ -154,6 +188,7 @@ namespace ConsoleApp {
 				result.Add(new Macro(f));
 			}
 			return result;
+			*/
 		}
 
 		public void CaptureAndMatch() {
