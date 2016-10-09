@@ -1,2 +1,2 @@
-screencap /data/local/tmp/sc.png
+screencap /data/local/tmp/sc.png #
 echo capfined
