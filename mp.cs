@@ -70,7 +70,6 @@ namespace ConsoleApp {
 		public void Init() {
 			foreach (var d in MacroDirs) { Console.WriteLine("MacroDir: {0}", d); }
 
-			//var files = Directory.GetFiles(path, "*").Where(x => x.EndsWith(".apm"));
 			var eMacroFiles= from d in MacroDirs
 				select Directory.GetFiles(d, "*")
 				into files
@@ -82,11 +81,6 @@ namespace ConsoleApp {
 				orderby Path.GetFileName(f)
 				select new Macro(f);
 
-			/*
-			var enumMacros = from d in MacroDirs
-				select GetMacros(d);
-			macros = enumMacros.SelectMany(x => x).ToArray();
-			*/
 			macros.ToList().ForEach(x => Console.WriteLine("Macro: {0}", x.Name));
 		}
 		
@@ -165,30 +159,6 @@ namespace ConsoleApp {
 					break;
 				}
 			}
-		}
-
-		public IEnumerable<Macro> GetMacros(string path) {
-		//public List<Macro> GetMacros(string path) {
-			//var files = Directory.GetFiles(path, "*.apm");
-			var files = Directory.GetFiles(path, "*").Where(x => x.EndsWith(".apm"));
-			Console.WriteLine("DEBUG 1");
-			files.ToList().ForEach(x => Console.WriteLine(x));
-			var f2 = files.Where(x => x.EndsWith("~") == false);
-			Console.WriteLine("DEBUG 2");
-			f2.ToList().ForEach(x => Console.WriteLine(x));
-			return files.Select(x => new Macro(x));
-			//return Directory.GetFiles(path, "*.apm").Select(x => new Macro(x));
-			/*
-			var result = new List<Macro>();
-			var files = Directory.GetFiles(path, "*.apm");
-			foreach (var f in files) {
-				Console.WriteLine(f);
-				//TODO:
-				//result.Add(FromFile(f));
-				result.Add(new Macro(f));
-			}
-			return result;
-			*/
 		}
 
 		public void CaptureAndMatch() {
