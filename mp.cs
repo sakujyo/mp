@@ -116,6 +116,7 @@ namespace ConsoleApp {
 
 			pb.Dock = DockStyle.Fill;
 			form.Text = "Pulled PNG";
+			form.Size = new Size(544, 340) + new Size(8, 28);	//TODO: merge branch adding-multi-client
 			form.Controls.Add(pb);
 			form.Show();
 			form.Closed += (s, e) => {
@@ -165,10 +166,9 @@ namespace ConsoleApp {
 		public void ReadAndMatch() {
 			var bmp = DP.ReadBitmap(scfilename);
 			//Console.WriteLine(bmp.Size);
+			Match(bmp);
 			pb.Image = bmp;
 			pb.Refresh();
-			form.Size = bmp.Size + new Size(8, 28);
-			Match(bmp);
 			//Application.Run(f);
 		}
 
