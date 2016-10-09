@@ -146,14 +146,9 @@ namespace ConsoleApp {
 
 		public void Match(Bitmap bmp) {
 			foreach (var m in macros) {
-				//TODO:
+				//TODO: threshold must be considered
 				if (m.IsMatch(bmp, 30000)) {
 					Console.WriteLine("Match: {0}", m.Name);
-					//100 300 => 0
-					// 50 250 => 1
-					//100 250 => 2
-					//100 150 => 8
-					//Tap(new Point(100, 250));	//TODO:
 					Tap(m.TapPoint);
 					SetTimeout(m.WaitTime);
 					break;
