@@ -118,20 +118,13 @@ namespace ConsoleApp {
 			Device = arr[0];
 			MacroDirs = arr[1].Split(' ');
 
-<<<<<<< 1a94a61a57cd21bd048fa8990f323118b703b71c
-=======
->>>>>>> temporary solution
 			pb.Dock = DockStyle.Fill;
 			form.Text = "Pulled PNG";
 			form.Controls.Add(pb);
 			form.Show();
-<<<<<<< 1a94a61a57cd21bd048fa8990f323118b703b71c
 			form.Closed += (s, e) => {
 				Dispose();
 			};
-=======
-			
->>>>>>> temporary solution
 
 			Console.WriteLine(Device);
 			var pargs = string.Format("{0} shell", Device);
