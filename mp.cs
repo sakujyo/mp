@@ -90,7 +90,7 @@ namespace ConsoleApp {
 		}
 		private Form form = new Form();
 		private PictureBox pb = new PictureBox();
-		private IEnumerable<Macro> macros;
+		private Macro[] macros;
 		private Size ScreenSize;
 		public IEnumerable<string> MacroDirs { get; set; }
 
@@ -104,9 +104,9 @@ namespace ConsoleApp {
 				where f.EndsWith(".apm")
 				select f;
 			eMacroFiles.ToList().ForEach(x => x.ToList().ForEach(y => Console.WriteLine(y)));
-			macros = from f in eMacroFiles.SelectMany(x => x)
+			macros = (from f in eMacroFiles.SelectMany(x => x)
 				orderby Path.GetFileName(f)
-				select new Macro(f);
+				select new Macro(f)).ToArray();
 
 			macros.ToList().ForEach(x => Console.WriteLine("Macro: {0}", x.Name));
 		}
@@ -178,9 +178,9 @@ namespace ConsoleApp {
 			System.Threading.Thread.Sleep(500);
 			var bmp = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
 			//Console.WriteLine(bmp.Size);
-			pb.Image = bmp;
 			//form.Size = bmp.Size + new Size(8, 28);
 			Match(bmp);
+			pb.Image = bmp;
 			pb.Refresh();
 			//Application.Run(f);
 		}
@@ -239,9 +239,9 @@ namespace ConsoleApp {
 			var d2s = 0;
 			for (var y = 0; y < Bitmap.Height; y++) {
 				for (var x = 0; x < Bitmap.Width; x++) {
-					Console.Write("D: c ");
+					//Console.Write("D: c ");
 					var c = Bitmap.GetPixel(x, y);
-					Console.Write("D: ct");
+					//Console.Write("D: ct");
 					var ct = bmp.GetPixel(Rect[0] + x, Rect[1] + y);
 					var er = c.R - ct.R;
 					var eg = c.G - ct.G;
@@ -249,8 +249,6 @@ namespace ConsoleApp {
 					d2s += er * er + eg * eg + eb * eb;
 				}
 			}
-			Console.WriteLine();
-			//return true;	//STUB:
 			Console.WriteLine("DEBUG: macro: {1}, d2s = {0}", d2s, Name);
 			return d2s < capableDistanceSquare;
 		}
