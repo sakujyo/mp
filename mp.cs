@@ -9,8 +9,7 @@ using System.Linq;
 namespace ConsoleApp {
 	class mp {
 		public static void Main(string[] args) {
-			var p1 = new Player();
-			p1.Device = "-s 192.168.225.101:5555";
+			var p1 = new Player("-s 192.168.56.102:5555");
 			p1.MacroDirs = new [] { @"macro\rx3", @"macro\rx3a" };
 			p1.Init();
 			p1.SetTimeout(1500);
@@ -71,12 +70,15 @@ namespace ConsoleApp {
 			macros = enumMacros.SelectMany(x => x).ToArray();
 		}
 
-		public Player() {
+		public Player(string deviceString) {
 			pb.Dock = DockStyle.Fill;
 			form.Text = "Pulled PNG";
 			form.Controls.Add(pb);
 			form.Show();
+			
+			Device = deviceString;
 
+			Console.WriteLine(Device);
 			var pargs = string.Format("{0} shell", Device);
 			var pinfo = new ProcessStartInfo("adb", pargs);
 			pinfo.UseShellExecute = false;
@@ -120,10 +122,12 @@ namespace ConsoleApp {
 		public void ReadAndMatch() {
 			var bmp = DP.ReadBitmap(scfilename);
 			//Console.WriteLine(bmp.Size);
+			/*
+			form.Size = bmp.Size + new Size(8, 28);
+			*/
+			Match(bmp);
 			pb.Image = bmp;
 			pb.Refresh();
-			form.Size = bmp.Size + new Size(8, 28);
-			Match(bmp);
 			//Application.Run(f);
 		}
 
@@ -157,7 +161,7 @@ namespace ConsoleApp {
 		}
 
 		public void CaptureAndMatch() {
-			SetTimeout(10 * 1000);
+			SetTimeout(1000);
 			pctrl.StandardInput.WriteLine("sh /data/local/tmp/screencap.sh");
 			//screencap.sh
 			//1: screencap /data/local/tmp/sc.png
