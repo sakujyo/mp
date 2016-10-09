@@ -8,7 +8,10 @@ using System.Linq;
 
 namespace ConsoleApp {
 	class mp {
+		const string deviceDefinitionFn = "devices.txt";
+
 		public static void Main(string[] args) {
+			/*
 			var p1 = new Player();
 			p1.Device = "-s 192.168.225.101:5555";
 			p1.MacroDirs = new [] { @"macro\rx3", @"macro\rx3a" };
@@ -18,7 +21,15 @@ namespace ConsoleApp {
 			//Console.WriteLine(DateTime.Now); //Console.WriteLine(p1.Next);
 			//p1.CaptureAndMatch();
 
-			var players = new [] { p1 };
+			//var players = new [] { p1 };
+			*/
+			var players = (from l in Lines(deviceDefinitionFn)
+					select new Player(l)).ToList();
+			players.ToList().ForEach(x => {
+					x.Init();
+					x.SetTimeout(1500);
+					});
+
 			var f = new Form(); //var f = InitComponents("MultiPlay 2");
 			f.Text = "MultiPlay 2";	//f.Text = formTitle;
 			f.Size = new Size(200, 200);
@@ -45,6 +56,16 @@ namespace ConsoleApp {
 			t.Start();
 
 			Application.Run(f);
+		}
+
+		public static List<string> Lines(string fn) {
+			var l = new List<string>();
+			using (var sr = new StreamReader(fn)) {
+				while (!sr.EndOfStream) {
+					l.Add(sr.ReadLine());
+				}
+			}
+			return l;
 		}
 
 		//private static Form InitComponents(string formTitle) { }
@@ -85,14 +106,21 @@ namespace ConsoleApp {
 		}
 		
 		public void Dispose() {
-			pctrl.Kill();
+			if (!pctrl.HasExited) pctrl.Kill();
 		}
 
-		public Player() {
+		public Player(string ddstr) {
+			var arr = ddstr.Split(',');
+			Device = arr[0];
+			MacroDirs = arr[1].Split(' ');
+
 			pb.Dock = DockStyle.Fill;
 			form.Text = "Pulled PNG";
 			form.Controls.Add(pb);
 			form.Show();
+			form.Closed += (s, e) => {
+				Dispose();
+			};
 
 			var pargs = string.Format("{0} shell", Device);
 			var pinfo = new ProcessStartInfo("adb", pargs);
