@@ -1,0 +1,2 @@
+A,-s 192.168.144.101:5555,544 340,macro\calculator macro\calculator\A5.1
+B,-s 192.168.144.102:5555,544 340,macro\calculator macro\calculator\B4.3

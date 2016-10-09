@@ -71,11 +71,16 @@ namespace ConsoleApp {
 		//private static Form InitComponents(string formTitle) { }
 	}
 
+	class LockClass {
+		public static object lockObject = new Object();
+	}
+
 	class Player {
-		const string scfilename = "sc.png";
+		const string scfilename = "sc";
 		private Process pctrl;
 		//private Process ppull;
 
+		public string Name	{ get; set; }
 		public string Device { get; set; }
 		public DateTime Next { get; set; }
 		public bool IsExpired {
@@ -86,6 +91,7 @@ namespace ConsoleApp {
 		private Form form = new Form();
 		private PictureBox pb = new PictureBox();
 		private IEnumerable<Macro> macros;
+		private Size ScreenSize;
 		public IEnumerable<string> MacroDirs { get; set; }
 
 		public void Init() {
@@ -111,11 +117,15 @@ namespace ConsoleApp {
 
 		public Player(string ddstr) {
 			var arr = ddstr.Split(',');
-			Device = arr[0];
-			MacroDirs = arr[1].Split(' ');
+			Name = arr[0];
+			Device = arr[1];
+			var ssStr = arr[2].Split(' ');
+			ScreenSize = new Size(int.Parse(ssStr[0]), int.Parse(ssStr[1]));
+			MacroDirs = arr[3].Split(' ');
 
 			pb.Dock = DockStyle.Fill;
 			form.Text = "Pulled PNG";
+			form.Size = ScreenSize + new Size(8, 28);
 			form.Controls.Add(pb);
 			form.Show();
 			form.Closed += (s, e) => {
@@ -128,7 +138,7 @@ namespace ConsoleApp {
 			pinfo.RedirectStandardInput = true;
 			pinfo.RedirectStandardOutput = true;
 
-			var ppinfo = new ProcessStartInfo("adb", string.Format("{0} pull /data/local/tmp/{1}", Device, scfilename));
+			var ppinfo = new ProcessStartInfo("adb", string.Format("{0} pull /data/local/tmp/{1}.png {1}{2}.png", Device, scfilename, Name));
 			ppinfo.UseShellExecute = false;
 			ppinfo.RedirectStandardInput = true;
 			ppinfo.RedirectStandardOutput = true;
@@ -148,7 +158,9 @@ namespace ConsoleApp {
 						} else {
 							Console.WriteLine(e2.Data);
 							if (e2.Data.ToString().Contains("KB/s")) {
+								lock (LockClass.lockObject) {
 								ReadAndMatch();
+								}
 							}
 						}
 					};
@@ -163,18 +175,20 @@ namespace ConsoleApp {
 		}
 
 		public void ReadAndMatch() {
-			var bmp = DP.ReadBitmap(scfilename);
+			System.Threading.Thread.Sleep(500);
+			var bmp = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
 			//Console.WriteLine(bmp.Size);
 			pb.Image = bmp;
-			pb.Refresh();
-			form.Size = bmp.Size + new Size(8, 28);
+			//form.Size = bmp.Size + new Size(8, 28);
 			Match(bmp);
+			pb.Refresh();
 			//Application.Run(f);
 		}
 
 		public void Match(Bitmap bmp) {
 			foreach (var m in macros) {
 				//TODO: threshold must be considered
+				Console.WriteLine("D: BEGIN Match {0}", m.Name);
 				if (m.IsMatch(bmp, 30000)) {
 					Console.WriteLine("Match: {0}", m.Name);
 					Tap(m.TapPoint);
@@ -215,7 +229,7 @@ namespace ConsoleApp {
 				Rect = sr.ReadLine().Split(' ').Select(x => int.Parse(x)).ToArray();
 				//var rect = new Func<string[], Rectangle>(x => new Rectangle(int.Parse(x[0]), int.Parse(x[1]), int.Parse(x[2]), int.Parse(x[3])))(sr.ReadLine().Split(' '));
 				TapPoint = new Func<string[], Point>(x => new Point(int.Parse(x[0]), int.Parse(x[1])))(sr.ReadLine().Split(' '));
-				WaitTime = int.Parse(sr.ReadLine());
+				WaitTime = int.Parse(sr.ReadLine().Split(' ')[0]);
 				Bitmap = DP.ReadBitmap(Path.Combine(Path.GetDirectoryName(fn), string.Format("{0}.png", Name)));
 			}
 		}
@@ -225,7 +239,9 @@ namespace ConsoleApp {
 			var d2s = 0;
 			for (var y = 0; y < Bitmap.Height; y++) {
 				for (var x = 0; x < Bitmap.Width; x++) {
+					Console.Write("D: c ");
 					var c = Bitmap.GetPixel(x, y);
+					Console.Write("D: ct");
 					var ct = bmp.GetPixel(Rect[0] + x, Rect[1] + y);
 					var er = c.R - ct.R;
 					var eg = c.G - ct.G;
@@ -233,8 +249,9 @@ namespace ConsoleApp {
 					d2s += er * er + eg * eg + eb * eb;
 				}
 			}
+			Console.WriteLine();
 			//return true;	//STUB:
-			Console.WriteLine("DEBUG: d2s = {0}", d2s);
+			Console.WriteLine("DEBUG: macro: {1}, d2s = {0}", d2s, Name);
 			return d2s < capableDistanceSquare;
 		}
 	}
