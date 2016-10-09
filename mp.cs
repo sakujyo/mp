@@ -11,9 +11,13 @@ namespace ConsoleApp {
 		const string deviceDefinitionFn = "devices.txt";
 
 		public static void Main(string[] args) {
+<<<<<<< 1a94a61a57cd21bd048fa8990f323118b703b71c
 			/*
 			var p1 = new Player();
 			p1.Device = "-s 192.168.225.101:5555";
+=======
+			var p1 = new Player("-s 192.168.56.102:5555");
+>>>>>>> temporary solution
 			p1.MacroDirs = new [] { @"macro\rx3", @"macro\rx3a" };
 			p1.Init();
 			p1.SetTimeout(1500);
@@ -114,14 +118,22 @@ namespace ConsoleApp {
 			Device = arr[0];
 			MacroDirs = arr[1].Split(' ');
 
+<<<<<<< 1a94a61a57cd21bd048fa8990f323118b703b71c
+=======
+>>>>>>> temporary solution
 			pb.Dock = DockStyle.Fill;
 			form.Text = "Pulled PNG";
 			form.Controls.Add(pb);
 			form.Show();
+<<<<<<< 1a94a61a57cd21bd048fa8990f323118b703b71c
 			form.Closed += (s, e) => {
 				Dispose();
 			};
+=======
+			
+>>>>>>> temporary solution
 
+			Console.WriteLine(Device);
 			var pargs = string.Format("{0} shell", Device);
 			var pinfo = new ProcessStartInfo("adb", pargs);
 			pinfo.UseShellExecute = false;
@@ -165,10 +177,12 @@ namespace ConsoleApp {
 		public void ReadAndMatch() {
 			var bmp = DP.ReadBitmap(scfilename);
 			//Console.WriteLine(bmp.Size);
+			/*
+			form.Size = bmp.Size + new Size(8, 28);
+			*/
+			Match(bmp);
 			pb.Image = bmp;
 			pb.Refresh();
-			form.Size = bmp.Size + new Size(8, 28);
-			Match(bmp);
 			//Application.Run(f);
 		}
 
@@ -185,7 +199,7 @@ namespace ConsoleApp {
 		}
 
 		public void CaptureAndMatch() {
-			SetTimeout(10 * 1000);
+			SetTimeout(1000);
 			pctrl.StandardInput.WriteLine("sh /data/local/tmp/screencap.sh");
 			//screencap.sh
 			//1: screencap /data/local/tmp/sc.png
