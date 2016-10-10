@@ -175,7 +175,7 @@ namespace ConsoleApp {
 		}
 
 		public void ReadAndMatch() {
-			System.Threading.Thread.Sleep(500);
+			//System.Threading.Thread.Sleep(500);
 			var bmp = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
 			//Console.WriteLine(bmp.Size);
 			//form.Size = bmp.Size + new Size(8, 28);
