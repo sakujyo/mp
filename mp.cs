@@ -188,8 +188,11 @@ namespace ConsoleApp {
 		public void Match(Bitmap bmp) {
 			foreach (var m in macros) {
 				//TODO: threshold must be considered
-				Console.WriteLine("D: BEGIN Match {0}", m.Name);
-				if (m.IsMatch(bmp, 30000)) {
+				//Console.WriteLine("D: BEGIN Match {0}", m.Name);
+				if (m.D2S(bmp) < 30000) {
+					Console.WriteLine("DEBUG: d2s = {0:6}, macro: {1}", m.D2S(bmp), m.Name);
+				}
+				if (m.IsMatch(bmp, 25000)) {
 					Console.WriteLine("Match: {0}", m.Name);
 					Tap(m.TapPoint);
 					SetTimeout(m.WaitTime);
@@ -210,7 +213,7 @@ namespace ConsoleApp {
 			pctrl.StandardInput.WriteLine("input touchscreen swipe {0} {1} {0} {1} {2}", p.X, p.Y, ms);
 		}
 		public void Tap(Point p) {
-			Tap(p, 50);
+			Tap(p, 100);
 		}
 	}
 
@@ -235,8 +238,11 @@ namespace ConsoleApp {
 		}
 
 		public bool IsMatch(Bitmap bmp, long capableDistanceSquare) {
-			//TODO:
-			var d2s = 0;
+			return D2S(bmp) < capableDistanceSquare;
+		}
+
+		public long D2S(Bitmap bmp) {
+			var d2s = 0L;
 			for (var y = 0; y < Bitmap.Height; y++) {
 				for (var x = 0; x < Bitmap.Width; x++) {
 					//Console.Write("D: c ");
@@ -249,8 +255,7 @@ namespace ConsoleApp {
 					d2s += er * er + eg * eg + eb * eb;
 				}
 			}
-			Console.WriteLine("DEBUG: macro: {1}, d2s = {0}", d2s, Name);
-			return d2s < capableDistanceSquare;
+			return d2s;
 		}
 	}
 
