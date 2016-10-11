@@ -71,10 +71,6 @@ namespace ConsoleApp {
 		//private static Form InitComponents(string formTitle) { }
 	}
 
-	class LockClass {
-		public static object lockObject = new Object();
-	}
-
 	class Player {
 		const string scfilename = "sc";
 		private Process pctrl;
@@ -158,9 +154,7 @@ namespace ConsoleApp {
 						} else {
 							Console.WriteLine(e2.Data);
 							if (e2.Data.ToString().Contains("KB/s")) {
-								lock (LockClass.lockObject) {
 								ReadAndMatch();
-								}
 							}
 						}
 					};
