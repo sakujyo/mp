@@ -17,14 +17,10 @@ namespace ConsoleApp {
 					players.Add(new Player(sr.ReadLine()));
 				}
 			}
-			foreach (var p in players) {
-				p.Init();
-				p.SetTimeout(1500);
-			}
 
 			var f = InitComponents(players);
 			f.Closed += (s, e) => {
-				players.ToList().ForEach(x => x.Dispose());
+				players.ForEach(x => x.Dispose());
 			};
 
 			var t = new Timer();
@@ -79,7 +75,8 @@ namespace ConsoleApp {
 				orderby Path.GetFileName(f)
 				select new Macro(f)).ToArray();
 
-			macros.ToList().ForEach(x => Console.WriteLine("{0}:Macro: {1}", Name, x.Name));
+			foreach(var m in macros) { Console.WriteLine("{0}:Macro: {1}", Name, m.Name); }
+			AssureDelay(1000);
 		}
 		
 		public void Dispose() {
@@ -146,6 +143,10 @@ namespace ConsoleApp {
 
 		public void SetTimeout(int ms) {
 			Next = DateTime.Now + new TimeSpan(0, 0, 0, 0, ms);
+		}
+
+		public void AssureDelay(int ms) {
+			if (Next - DateTime.Now < new TimeSpan(0, 0, 0, 0, ms)) SetTimeout(ms);
 		}
 
 		public void ReadAndMatch() {
