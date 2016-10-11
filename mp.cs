@@ -54,9 +54,10 @@ namespace ConsoleApp {
 	}
 
 	class Player {
+		const string transferLogFn = "transferlog";
+		const string matchLogFn = "matchlog";
 		const string scfilename = "sc";
 		private Process pctrl;
-		//private Process ppull;
 
 		public string Name	{ get; set; }
 		public string Device { get; set; }
@@ -70,10 +71,10 @@ namespace ConsoleApp {
 		private PictureBox pb = new PictureBox();
 		private Macro[] macros;
 		private Size ScreenSize;
-		public IEnumerable<string> MacroDirs { get; set; }
+		private string[] MacroDirs { get; set; }
 
 		public void Init() {
-			foreach (var d in MacroDirs) { Console.WriteLine("MacroDir: {0}", d); }
+			foreach (var d in MacroDirs) { Console.WriteLine("{0}:MacroDir: {1}", Name, d); }
 
 			var eMacroFiles= from d in MacroDirs
 				select Directory.GetFiles(d, "*")
@@ -81,12 +82,12 @@ namespace ConsoleApp {
 				select from f in files
 				where f.EndsWith(".apm")
 				select f;
-			eMacroFiles.ToList().ForEach(x => x.ToList().ForEach(y => Console.WriteLine(y)));
+			eMacroFiles.ToList().ForEach(x => x.ToList().ForEach(y => Console.WriteLine("{0}:{1}", Name, y)));
 			macros = (from f in eMacroFiles.SelectMany(x => x)
 				orderby Path.GetFileName(f)
 				select new Macro(f)).ToArray();
 
-			macros.ToList().ForEach(x => Console.WriteLine("Macro: {0}", x.Name));
+			macros.ToList().ForEach(x => Console.WriteLine("{0}:Macro: {1}", Name, x.Name));
 		}
 		
 		public void Dispose() {
@@ -102,7 +103,7 @@ namespace ConsoleApp {
 			MacroDirs = arr[3].Split(' ');
 
 			pb.Dock = DockStyle.Fill;
-			form.Text = "Pulled PNG";
+			form.Text = Name;
 			form.Size = ScreenSize + new Size(8, 28);
 			form.Controls.Add(pb);
 			form.Show();
@@ -131,10 +132,8 @@ namespace ConsoleApp {
 					ppull.OutputDataReceived += (s2, e2) => {};
 					ppull.BeginOutputReadLine();
 					ppull.ErrorDataReceived += (s2, e2) => {
-						if (e2.Data == null) {
-							//Console.WriteLine("e2.Data == null");
-						} else {
-							Console.WriteLine(e2.Data);
+						if (e2.Data != null) {
+							WriteLog(transferLogFn, e2.Data);
 							if (e2.Data.ToString().Contains("KB/s")) {
 								ReadAndMatch();
 							}
@@ -144,6 +143,13 @@ namespace ConsoleApp {
 				}
 			};
 			pctrl.BeginOutputReadLine();
+		}
+
+		private void WriteLog(string logfn, string msg) {
+			var fn = string.Format("{0}{1}.txt", logfn, Name);
+			using (var sw = new StreamWriter(fn, true)) {	// true: append
+				sw.WriteLine(string.Format("{0}:{1}", Name, msg));
+			}
 		}
 
 		public void SetTimeout(int ms) {
@@ -166,10 +172,10 @@ namespace ConsoleApp {
 				//TODO: threshold must be considered
 				//Console.WriteLine("D: BEGIN Match {0}", m.Name);
 				if (m.D2S(bmp) < 30000) {
-					Console.WriteLine("DEBUG: d2s = {0:6}, macro: {1}", m.D2S(bmp), m.Name);
+					WriteLog(matchLogFn, string.Format("d2s = {0,6}, macro: {1}", m.D2S(bmp), m.Name));
 				}
 				if (m.IsMatch(bmp, 25000)) {
-					Console.WriteLine("Match: {0}", m.Name);
+					Console.WriteLine("{2}:Match: {0}, {1}", m.Name, m.WaitTime, Name);
 					Tap(m.TapPoint);
 					SetTimeout(m.WaitTime);
 					break;
