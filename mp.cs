@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace ConsoleApp {
-	class mp {
+	partial class mp {
 		const string deviceDefinitionFn = "devices.txt";
 
 		public static void Main(string[] args) {
@@ -18,13 +18,11 @@ namespace ConsoleApp {
 				}
 			}
 			foreach (var p in players) {
-					p.Init();
-					p.SetTimeout(1500);
+				p.Init();
+				p.SetTimeout(1500);
 			}
 
-			var f = new Form(); //var f = InitComponents("MultiPlay 2");
-			f.Text = "MultiPlay 2";	//f.Text = formTitle;
-			f.Size = new Size(200, 200);
+			var f = InitComponents(players);
 			f.Closed += (s, e) => {
 				players.ToList().ForEach(x => x.Dispose());
 			};
@@ -33,24 +31,16 @@ namespace ConsoleApp {
 			t.Interval = 50;
 			t.Tick += (s, e) => {
 				foreach (var p in players) {
-					if (p.IsExpired) {
+					if (p.IsRunning && p.IsExpired) {
 						p.CaptureAndMatch();
 					}
 				}
 			};
-			var bStop = new Button();
-			bStop.Text = "Stop";
-			bStop.Click += (s, e) => {
-				t.Stop();
-			};
-			f.Controls.Add(bStop);
 
 			t.Start();
 
 			Application.Run(f);
 		}
-
-		//private static Form InitComponents(string formTitle) { }
 	}
 
 	class Player {
@@ -62,6 +52,8 @@ namespace ConsoleApp {
 		public string Name	{ get; set; }
 		public string Device { get; set; }
 		public DateTime Next { get; set; }
+		public bool IsRunning { get; set; }
+		public bool IsObserved { get; set; }
 		public bool IsExpired {
 			get {
 				return DateTime.Now > Next;
@@ -69,7 +61,7 @@ namespace ConsoleApp {
 		}
 		private Form form = new Form();
 		private PictureBox pb = new PictureBox();
-		private Macro[] macros;
+		public Macro[] macros	{ get; private set; }	// readonly?
 		private Size ScreenSize;
 		private string[] MacroDirs { get; set; }
 
@@ -257,6 +249,46 @@ namespace ConsoleApp {
 				}
 			}
 
+		}
+	}
+
+	partial class mp {
+		private static Form InitComponents(List<Player> players) {
+			var f = new Form();
+			f.Text = "MultiPlay 2";	//f.Text = formTitle;
+			var fHeight = 104;
+			f.Size = new Size(300, fHeight);
+			for (var i = 0; i < players.Count(); i++) {
+				var p = players[i];
+				var panel = new Panel();
+				panel.Location = new Point(i * 100, 8);
+				panel.Size = new Size(100, fHeight);
+
+				var lName = new Label();
+				lName.Text = p.Name;
+				lName.Location = new Point(0, 24 * 0 + 0);
+				panel.Controls.Add(lName);
+
+				var cbRunning = new CheckBox();
+				cbRunning.Text = "Running";
+				cbRunning.CheckedChanged += (s, e) => {
+					p.IsRunning = cbRunning.Checked;
+					if (p.IsRunning) p.Init();
+				};
+				panel.Controls.Add(cbRunning);
+				cbRunning.Location = new Point(0, 24 * 1 - 4);
+
+				var cbNotify = new CheckBox();
+				cbNotify.Text = "Notify";
+				cbNotify.CheckedChanged += (s, e) => {
+					p.IsObserved = !p.IsObserved;
+				};
+				panel.Controls.Add(cbNotify);
+				cbNotify.Location = new Point(0, 24 * 2 - 4);
+
+				f.Controls.Add(panel);
+			}
+			return f;
 		}
 	}
 }
