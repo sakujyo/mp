@@ -134,7 +134,7 @@ namespace ConsoleApp {
 			pctrl.BeginOutputReadLine();
 		}
 
-		private void WriteLog(string logfn, string msg) {
+		public void WriteLog(string logfn, string msg) {
 			var fn = string.Format("{0}{1}.txt", logfn, Name);
 			using (var sw = new StreamWriter(fn, true)) {	// true: append
 				sw.WriteLine(string.Format("{0}:{1}", Name, msg));
@@ -150,20 +150,15 @@ namespace ConsoleApp {
 		}
 
 		public void ReadAndMatch() {
-			//System.Threading.Thread.Sleep(500);
 			var bmp = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
-			//Console.WriteLine(bmp.Size);
-			//form.Size = bmp.Size + new Size(8, 28);
 			Match(bmp);
 			pb.Image = bmp;
 			pb.Refresh();
-			//Application.Run(f);
 		}
 
 		public void Match(Bitmap bmp) {
 			foreach (var m in macros) {
 				//TODO: threshold must be considered
-				//Console.WriteLine("D: BEGIN Match {0}", m.Name);
 				if (m.D2S(bmp) < 30000) {
 					WriteLog(matchLogFn, string.Format("d2s = {0,6}, macro: {1}", m.D2S(bmp), m.Name));
 				}
@@ -205,7 +200,6 @@ namespace ConsoleApp {
 				Name = sr.ReadLine();
 				if (Path.GetFileName(fn).Replace(".apm", "") != Name) Console.WriteLine("W: MacroName != filename");
 				Rect = sr.ReadLine().Split(' ').Select(x => int.Parse(x)).ToArray();
-				//var rect = new Func<string[], Rectangle>(x => new Rectangle(int.Parse(x[0]), int.Parse(x[1]), int.Parse(x[2]), int.Parse(x[3])))(sr.ReadLine().Split(' '));
 				TapPoint = new Func<string[], Point>(x => new Point(int.Parse(x[0]), int.Parse(x[1])))(sr.ReadLine().Split(' '));
 				WaitTime = int.Parse(sr.ReadLine().Split(' ')[0]);
 				Bitmap = DP.ReadBitmap(Path.Combine(Path.GetDirectoryName(fn), string.Format("{0}.png", Name)));
@@ -220,9 +214,7 @@ namespace ConsoleApp {
 			var d2s = 0L;
 			for (var y = 0; y < Bitmap.Height; y++) {
 				for (var x = 0; x < Bitmap.Width; x++) {
-					//Console.Write("D: c ");
 					var c = Bitmap.GetPixel(x, y);
-					//Console.Write("D: ct");
 					var ct = bmp.GetPixel(Rect[0] + x, Rect[1] + y);
 					var er = c.R - ct.R;
 					var eg = c.G - ct.G;
@@ -256,7 +248,7 @@ namespace ConsoleApp {
 	partial class mp {
 		private static Form InitComponents(List<Player> players) {
 			var f = new Form();
-			f.Text = "MultiPlay 2";	//f.Text = formTitle;
+			f.Text = "MultiPlay 2";
 			var fHeight = 104;
 			f.Size = new Size(300, fHeight);
 			for (var i = 0; i < players.Count(); i++) {
