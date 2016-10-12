@@ -22,21 +22,19 @@ int main(int argc, char *argv[]) {
 	int height = *((int *)bufh);
 	fread(bufb, (size_t)1, (size_t)4, fp);
 	int bpp = *((int *)bufb);
-	printf("w, h, b: %d, %d, %d", width, height, bpp);
+	printf("w, h, b: %d, %d, %d\n", width, height, bpp);
 
 	if ((outp = fopen(argv[3], "wb")) == NULL) {
 		printf("%s open error.\n", argv[3]);
 		exit(EXIT_FAILURE);
 	}
 
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
+	for (int y = 0; y < height; y += d) {
+		for (int x = 0; x < width; x += d) {
+			//fseek(fp, (long)(12 + width * 4 * y + x * 4), SEEK_SET); 
+			fseek(fp, (long)(12 + 4 * (width * y + x)), SEEK_SET); 
 			fread(bufp, (size_t)1, (size_t)4, fp);
-			if ((y % d) == 0) {
-				if ((x % d) == 0) {
-					fwrite(bufp, (size_t)1, (size_t)3, outp);
-				}
-			}
+			fwrite(bufp, (size_t)1, (size_t)3, outp);
 		}
 	}
 
