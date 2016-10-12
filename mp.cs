@@ -166,9 +166,14 @@ namespace ConsoleApp {
 					Console.WriteLine("{2}:Match: {0}, {1}", m.Name, m.WaitTime, Name);
 					Tap(m.TapPoint);
 					SetTimeout(m.WaitTime);
-					break;
+					return;
 				}
 			}
+			Notify();
+		}
+
+		public void Notify() {
+			if (IsObserved) Console.Beep();
 		}
 
 		public void CaptureAndMatch() {
