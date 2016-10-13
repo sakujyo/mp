@@ -53,6 +53,7 @@ namespace ConsoleApp {
 		public string Name	{ get; set; }
 		public string Device { get; set; }
 		public CapImageFormat Format { get; set; }
+		public int Scaling { get; set; }
 		public DateTime Next { get; set; }
 		public bool IsRunning { get; set; }
 		public bool IsObserved { get; set; }
@@ -96,10 +97,11 @@ namespace ConsoleApp {
 			var arr = ddstr.Split(',');
 			Name = arr[0];
 			Device = arr[1];
-			var ssStr = arr[2].Split(' ');
+			Format = arr[2] == "Raw" ? CapImageFormat.Raw : CapImageFormat.Png;
+			Scaling = int.Parse(arr[3]);
+			var ssStr = arr[4].Split(' ');
 			ScreenSize = new Size(int.Parse(ssStr[0]), int.Parse(ssStr[1]));
-			Format = arr[3] == "Raw" ? CapImageFormat.Raw : CapImageFormat.Png;
-			MacroDirs = arr[4].Split(' ');
+			MacroDirs = arr[5].Split(' ');
 
 			pb.Dock = DockStyle.Fill;
 			form.Text = Name;
@@ -150,11 +152,10 @@ namespace ConsoleApp {
 		private void pbMouseUp(Object sender, MouseEventArgs eargs) {
 			if ((eargs.Button & MouseButtons.Right) == MouseButtons.Right) {
 				//https://msdn.microsoft.com/ja-jp/library/system.windows.forms.control.pointtoscreen(v=vs.110).aspx
-				var pbLocToScreen = pb.PointToScreen(pb.Location);
-				Console.WriteLine(pbLocToScreen);
 				var f = new Form();
 				f.StartPosition = FormStartPosition.Manual;
-				f.Location = pbLocToScreen;
+				var pbLocToScreen = Point.Empty;
+				f.Location = pb.PointToScreen(pb.Location);
 				f.Size = new Size(200, 100);
 				f.Opacity = 0.5;
 				f.BackColor = Color.FromArgb(255, 96, 64, 255);
@@ -211,12 +212,14 @@ namespace ConsoleApp {
 							f.Size += new Size(+1, 0);
 							break;
 						case Keys.Z:
-							rectStr = string.Format("{0} {1} {2} {3}", f.Left, f.Top, f.Width, f.Height);
+							pbLocToScreen = pb.PointToScreen(pb.Location);
+							rectStr = string.Format("{0} {1} {2} {3}", f.Left - pbLocToScreen.X, f.Top - pbLocToScreen.Y, f.Width, f.Height);
 							break;
 						case Keys.C:
+							pbLocToScreen = pb.PointToScreen(pb.Location);
 							if (rectStr == "")
-								rectStr = string.Format("{0} {1} {2} {3}", f.Left, f.Top, f.Width, f.Height);
-							var tapPointStr = string.Format("{0} {1}", f.Left + f.Width / 2, f.Top + f.Height / 2);
+								rectStr = string.Format("{0} {1} {2} {3}", f.Left - pbLocToScreen.X, f.Top - pbLocToScreen.Y, f.Width, f.Height);
+							var tapPointStr = string.Format("{0} {1}", f.Left - pbLocToScreen.X + f.Width / 2, f.Top - pbLocToScreen.Y + f.Height / 2);
 							var newMacroName = "";
 							var textDialog = new TextDialog();
 
@@ -268,7 +271,11 @@ namespace ConsoleApp {
 		}
 
 		public void ReadAndMatch() {
-			Bitmap = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
+			if (Format == CapImageFormat.Png) {
+				Bitmap = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
+			} else {
+				Bitmap = DP.ReadRawBitmap(string.Format("{0}{1}.raw", scfilename, Name), ScreenSize.Width, ScreenSize.Height);
+			}
 			Match(Bitmap);
 			pb.Image = Bitmap;
 			pb.Refresh();
@@ -296,14 +303,19 @@ namespace ConsoleApp {
 
 		public void CaptureAndMatch() {
 			SetTimeout(10 * 1000);
-			pctrl.StandardInput.WriteLine("sh /data/local/tmp/screencap.sh");
+			if (Format == CapImageFormat.Png) {
+				pctrl.StandardInput.WriteLine("sh /data/local/tmp/screencap.sh");
+			} else {
+				pctrl.StandardInput.WriteLine("sh /data/local/tmp/shrinkcap.sh");
+			}
 			//screencap.sh
 			//1: screencap /data/local/tmp/sc.png
 			//2: echo capfined
 		}
 
 		public void Tap(Point p, int ms) {
-			pctrl.StandardInput.WriteLine("input touchscreen swipe {0} {1} {0} {1} {2}", p.X, p.Y, ms);
+			Console.WriteLine("Scaling: {0}", Scaling);
+			pctrl.StandardInput.WriteLine("input touchscreen swipe {0} {1} {0} {1} {2}", p.X * Scaling, p.Y * Scaling, ms);
 		}
 		public void Tap(Point p) {
 			Tap(p, 100);
@@ -353,6 +365,10 @@ namespace ConsoleApp {
 		}
 
 		public bool IsMatch(Bitmap bmp, long capableDistanceSquare) {
+			Console.WriteLine("in IsMatch(): {0}, {1}, {2}", Rect[0], Bitmap.Width, bmp.Width);
+			Console.WriteLine("in IsMatch(): {0}, {1}, {2}", Rect[1], Bitmap.Height, bmp.Height);
+			if (Rect[0] + Bitmap.Width > bmp.Width) return false;
+			if (Rect[1] + Bitmap.Height > bmp.Height) return false;
 			return D2S(bmp) < capableDistanceSquare;
 		}
 
@@ -388,6 +404,22 @@ namespace ConsoleApp {
 				}
 			}
 
+		}
+		public static Bitmap ReadRawBitmap(string fn, int width, int height) {
+			using (var fs = new FileStream(fn, FileMode.Open)) {
+				var bmp = new Bitmap(width, height);
+				for (int y = 0; y < height; y++) {
+					for (int x = 0; x < width; x++) { 
+						var r = fs.ReadByte();	//a & (255 - 7);
+						var g = fs.ReadByte();	//((a & 0x07) << 5) | ((c & 224) >> 3);
+						var b = fs.ReadByte();	//(c & 31) << 3;
+						var a = 255;
+						//var a = fs.ReadByte();
+						bmp.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+					}
+				}
+				return bmp;
+			}
 		}
 	}
 
