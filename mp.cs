@@ -162,19 +162,23 @@ namespace ConsoleApp {
 				var isDrag = false;
 				var startPointForm = Point.Empty;
 				var startPointCursor = Point.Empty;
+				var startSize = Size.Empty;
 				f.MouseDown += (s, e) => {
-					if (e.Button == MouseButtons.Left) {
-						isDrag = true;
-						startPointCursor = f.PointToScreen(new Point(e.X, e.Y));
-						startPointForm = f.PointToScreen(Point.Empty);
-					};
+					isDrag = true;
+					startPointCursor = f.PointToScreen(new Point(e.X, e.Y));
+					startPointForm = f.PointToScreen(Point.Empty);
+					startSize = f.Size;
 				};
 				f.MouseUp += (s, e) => {
-					if (e.Button == MouseButtons.Left) isDrag = false;
+					isDrag = false;
 				};
 				f.MouseMove += (s, e) => {
 					if (isDrag) {
-						f.Location = startPointForm + (Size)(f.PointToScreen(new Point(e.X, e.Y)) - (Size)startPointCursor);
+						if (e.Button == MouseButtons.Left) {
+							f.Location = startPointForm + (Size)(f.PointToScreen(new Point(e.X, e.Y)) - (Size)startPointCursor);
+						} else if (e.Button == MouseButtons.Right) {
+							f.Size = startSize + (Size)(f.PointToScreen(new Point(e.X, e.Y)) - (Size)startPointCursor);
+						}
 					}
 				};
 				var rectStr = "";
