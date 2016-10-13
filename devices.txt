@@ -1,1 +1,3 @@
-A,-s 192.168.234.101:5555,Raw,3,640 400,macro\calculator macro\calculator\A5.1 macro\calculator\A5.1\new
+A,-s 192.168.56.101:5555,Raw,3,640 400,macro\calculator macro\calculator\A5.1 macro\calculator\A5.1\new
+B,-s 192.168.56.102:5555,Raw,1,640 400,macro\calculator macro\calculator\A5.1 macro\calculator\A5.1\new
+C,-s 192.168.56.103:5555,Png,1,640 400,macro\calculator macro\calculator\A5.1 macro\calculator\A5.1\new

@@ -365,8 +365,6 @@ namespace ConsoleApp {
 		}
 
 		public bool IsMatch(Bitmap bmp, long capableDistanceSquare) {
-			Console.WriteLine("in IsMatch(): {0}, {1}, {2}", Rect[0], Bitmap.Width, bmp.Width);
-			Console.WriteLine("in IsMatch(): {0}, {1}, {2}", Rect[1], Bitmap.Height, bmp.Height);
 			if (Rect[0] + Bitmap.Width > bmp.Width) return false;
 			if (Rect[1] + Bitmap.Height > bmp.Height) return false;
 			return D2S(bmp) < capableDistanceSquare;
