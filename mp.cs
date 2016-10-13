@@ -39,6 +39,11 @@ namespace ConsoleApp {
 		}
 	}
 
+	enum CapImageFormat {
+		Png,
+		Raw,
+	}
+
 	class Player {
 		const string transferLogFn = "transferlog";
 		const string matchLogFn = "matchlog";
@@ -47,6 +52,7 @@ namespace ConsoleApp {
 
 		public string Name	{ get; set; }
 		public string Device { get; set; }
+		public CapImageFormat Format { get; set; }
 		public DateTime Next { get; set; }
 		public bool IsRunning { get; set; }
 		public bool IsObserved { get; set; }
@@ -60,6 +66,9 @@ namespace ConsoleApp {
 		public Macro[] macros	{ get; private set; }	// readonly?
 		private Size ScreenSize;
 		private string[] MacroDirs { get; set; }
+
+		public Bitmap Bitmap { get; private set; }
+		const int defaultWaitTime = 10 * 1000;
 
 		public void Init() {
 			foreach (var d in MacroDirs) { Console.WriteLine("{0}:MacroDir: {1}", Name, d); }
@@ -89,7 +98,8 @@ namespace ConsoleApp {
 			Device = arr[1];
 			var ssStr = arr[2].Split(' ');
 			ScreenSize = new Size(int.Parse(ssStr[0]), int.Parse(ssStr[1]));
-			MacroDirs = arr[3].Split(' ');
+			Format = arr[3] == "Raw" ? CapImageFormat.Raw : CapImageFormat.Png;
+			MacroDirs = arr[4].Split(' ');
 
 			pb.Dock = DockStyle.Fill;
 			form.Text = Name;
@@ -99,6 +109,7 @@ namespace ConsoleApp {
 			form.Closed += (s, e) => {
 				Dispose();
 			};
+			pb.MouseUp += new MouseEventHandler(pbMouseUp);
 
 			var pargs = string.Format("{0} shell", Device);
 			var pinfo = new ProcessStartInfo("adb", pargs);
@@ -106,7 +117,9 @@ namespace ConsoleApp {
 			pinfo.RedirectStandardInput = true;
 			pinfo.RedirectStandardOutput = true;
 
-			var ppinfo = new ProcessStartInfo("adb", string.Format("{0} pull /data/local/tmp/{1}.png {1}{2}.png", Device, scfilename, Name));
+			var ppinfo = Format == CapImageFormat.Png ?
+				new ProcessStartInfo("adb", string.Format("{0} pull /data/local/tmp/{1}.png {1}{2}.png", Device, scfilename, Name)) :
+				new ProcessStartInfo("adb", string.Format("{0} pull /data/local/tmp/{1}.raw {1}{2}.raw", Device, scfilename, Name));
 			ppinfo.UseShellExecute = false;
 			ppinfo.RedirectStandardInput = true;
 			ppinfo.RedirectStandardOutput = true;
@@ -134,6 +147,107 @@ namespace ConsoleApp {
 			pctrl.BeginOutputReadLine();
 		}
 
+		private void pbMouseUp(Object sender, MouseEventArgs eargs) {
+			if ((eargs.Button & MouseButtons.Right) == MouseButtons.Right) {
+				//https://msdn.microsoft.com/ja-jp/library/system.windows.forms.control.pointtoscreen(v=vs.110).aspx
+				var pbLocToScreen = pb.PointToScreen(pb.Location);
+				Console.WriteLine(pbLocToScreen);
+				var f = new Form();
+				f.StartPosition = FormStartPosition.Manual;
+				f.Location = pbLocToScreen;
+				f.Size = new Size(200, 100);
+				f.Opacity = 0.5;
+				f.BackColor = Color.FromArgb(255, 96, 64, 255);
+				f.FormBorderStyle = FormBorderStyle.None;
+				var isDrag = false;
+				var startPointForm = Point.Empty;
+				var startPointCursor = Point.Empty;
+				f.MouseDown += (s, e) => {
+					if (e.Button == MouseButtons.Left) {
+						isDrag = true;
+						startPointCursor = f.PointToScreen(new Point(e.X, e.Y));
+						startPointForm = f.PointToScreen(Point.Empty);
+					};
+				};
+				f.MouseUp += (s, e) => {
+					if (e.Button == MouseButtons.Left) isDrag = false;
+				};
+				f.MouseMove += (s, e) => {
+					if (isDrag) {
+						f.Location = startPointForm + (Size)(f.PointToScreen(new Point(e.X, e.Y)) - (Size)startPointCursor);
+					}
+				};
+				var rectStr = "";
+				var waitTimeStr = defaultWaitTime.ToString();
+				f.KeyDown += (s, e) => {
+					//var tapPointStr = "";
+					switch (e.KeyCode) {
+						case Keys.W:
+							f.Location += new Size(0, -1);
+							break;
+						case Keys.S:
+							f.Location += new Size(0, +1);
+							break;
+						case Keys.A:
+							f.Location += new Size(-1, 0);
+							break;
+						case Keys.D:
+							f.Location += new Size(+1, 0);
+							break;
+						case Keys.T:
+							f.Size += new Size(0, -1);
+							break;
+						case Keys.G:
+							f.Size += new Size(0, +1);
+							break;
+						case Keys.F:
+							f.Size += new Size(-1, 0);
+							break;
+						case Keys.H:
+							f.Size += new Size(+1, 0);
+							break;
+						case Keys.Z:
+							rectStr = string.Format("{0} {1} {2} {3}", f.Left, f.Top, f.Width, f.Height);
+							break;
+						case Keys.C:
+							if (rectStr == "")
+								rectStr = string.Format("{0} {1} {2} {3}", f.Left, f.Top, f.Width, f.Height);
+							var tapPointStr = string.Format("{0} {1}", f.Left + f.Width / 2, f.Top + f.Height / 2);
+							var newMacroName = "";
+							var textDialog = new TextDialog();
+
+							Console.WriteLine(rectStr);
+
+							var macroNameDialog = new OpenFileDialog();
+							if (textDialog.ShowDialog() == DialogResult.OK) {
+								newMacroName = textDialog.Text;
+								using (var sw = new StreamWriter(Path.Combine(MacroDirs.Last(), string.Format("{0}.apm", newMacroName)))) {
+									sw.WriteLine(newMacroName);
+									sw.WriteLine(rectStr);
+									sw.WriteLine(tapPointStr);
+									sw.WriteLine(waitTimeStr);
+								}
+								var rectArr = rectStr.Split(' ');
+								var newMacroBitmap = new Bitmap(int.Parse(rectArr[2]), int.Parse(rectArr[3]));
+								var g = Graphics.FromImage(newMacroBitmap);
+								g.DrawImage(
+										Bitmap,
+										0, 0,
+										new Rectangle(int.Parse(rectArr[0]), int.Parse(rectArr[1]), int.Parse(rectArr[2]), int.Parse(rectArr[3])),
+										GraphicsUnit.Pixel
+									   );
+								newMacroBitmap.Save(Path.Combine(MacroDirs.Last(), string.Format("{0}.png", newMacroName)));
+							}
+							f.Close();
+							break;
+						default:
+							break;
+					}
+				};
+				f.Show();
+			}
+		}
+
 		public void WriteLog(string logfn, string msg) {
 			var fn = string.Format("{0}{1}.txt", logfn, Name);
 			using (var sw = new StreamWriter(fn, true)) {	// true: append
@@ -150,9 +264,9 @@ namespace ConsoleApp {
 		}
 
 		public void ReadAndMatch() {
-			var bmp = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
-			Match(bmp);
-			pb.Image = bmp;
+			Bitmap = DP.ReadBitmap(string.Format("{0}{1}.png", scfilename, Name));
+			Match(Bitmap);
+			pb.Image = Bitmap;
 			pb.Refresh();
 		}
 
@@ -189,6 +303,29 @@ namespace ConsoleApp {
 		}
 		public void Tap(Point p) {
 			Tap(p, 100);
+		}
+	}
+
+	class TextDialog : CommonDialog {
+		public string Text { get; private set; }
+		public TextDialog() {
+		}
+		protected override bool RunDialog(IntPtr hwndOwner) {
+			var f = new Form();
+			f.Size = new Size(212, 56);
+			var tbText = new TextBox();
+			tbText.Width = 200;
+			tbText.KeyUp += (s, e) => {
+				if (e.KeyCode == Keys.Enter) {
+					Text = tbText.Text;
+					f.Close();
+				}
+			};
+			f.Controls.Add(tbText);
+			f.ShowDialog();
+			return true;
+		}
+		public override void Reset() {
 		}
 	}
 
