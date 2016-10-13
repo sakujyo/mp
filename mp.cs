@@ -153,12 +153,13 @@ namespace ConsoleApp {
 			if ((eargs.Button & MouseButtons.Right) == MouseButtons.Right) {
 				//https://msdn.microsoft.com/ja-jp/library/system.windows.forms.control.pointtoscreen(v=vs.110).aspx
 				var f = new Form();
+				f.Text = "Matching Rectangle";
 				f.StartPosition = FormStartPosition.Manual;
 				var pbLocToScreen = Point.Empty;
 				f.Location = pb.PointToScreen(pb.Location);
 				f.Size = new Size(200, 100);
 				f.Opacity = 0.5;
-				f.BackColor = Color.FromArgb(255, 96, 64, 255);
+				f.BackColor = Color.FromArgb(255, 64, 32, 255);
 				f.FormBorderStyle = FormBorderStyle.None;
 				var isDrag = false;
 				var startPointForm = Point.Empty;
@@ -212,7 +213,9 @@ namespace ConsoleApp {
 							f.Size += new Size(+1, 0);
 							break;
 						case Keys.Z:
+							f.BackColor = Color.FromArgb(255, 255, 64, 96);
 							pbLocToScreen = pb.PointToScreen(pb.Location);
+							Console.WriteLine("Point = {0}, Size = {1}", f.Location - (Size)pbLocToScreen, f.Size);
 							rectStr = string.Format("{0} {1} {2} {3}", f.Left - pbLocToScreen.X, f.Top - pbLocToScreen.Y, f.Width, f.Height);
 							break;
 						case Keys.C:
@@ -432,6 +435,7 @@ namespace ConsoleApp {
 				var panel = new Panel();
 				panel.Location = new Point(i * 100, 8);
 				panel.Size = new Size(100, fHeight);
+				panel.BackColor = Color.FromArgb(255, 64, 64, 64);
 
 				var lName = new Label();
 				lName.Text = p.Name;
@@ -443,6 +447,11 @@ namespace ConsoleApp {
 				cbRunning.CheckedChanged += (s, e) => {
 					p.IsRunning = cbRunning.Checked;
 					if (p.IsRunning) p.Init();
+					if (p.IsRunning) {
+						panel.BackColor = Color.FromArgb(255, 96, 64, 255);
+					} else {
+						panel.BackColor = Color.FromArgb(255, 64, 64, 64);
+					}
 				};
 				panel.Controls.Add(cbRunning);
 				cbRunning.Location = new Point(0, 24 * 1 - 4);
