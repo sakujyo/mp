@@ -27,7 +27,7 @@ namespace ConsoleApp {
 			t.Interval = 50;
 			t.Tick += (s, e) => {
 				foreach (var p in players) {
-					if (p.IsRunning && p.IsExpired) {
+					if (!p.IsMatching && p.IsRunning && p.IsExpired) {
 						p.CaptureAndMatch();
 					}
 				}
@@ -70,6 +70,7 @@ namespace ConsoleApp {
 
 		public Bitmap Bitmap { get; private set; }
 		const int defaultWaitTime = 10 * 1000;
+		public bool IsMatching	{ get; private set; }
 
 		public void Init() {
 			foreach (var d in MacroDirs) { Console.WriteLine("{0}:MacroDir: {1}", Name, d); }
@@ -294,10 +295,14 @@ namespace ConsoleApp {
 					Console.WriteLine("{2}:Match: {0}, {1}", m.Name, m.WaitTime / 1000d, Name);
 					Tap(m.TapPoint);
 					SetTimeout(m.WaitTime);
-					return;
+					//return;
+					goto END_MATCHING;
 				}
 			}
 			Notify();
+			SetTimeout(10 * 1000);
+END_MATCHING:
+			IsMatching = false;
 		}
 
 		public void Notify() {
@@ -305,7 +310,7 @@ namespace ConsoleApp {
 		}
 
 		public void CaptureAndMatch() {
-			SetTimeout(10 * 1000);
+			IsMatching = true;
 			if (Format == CapImageFormat.Png) {
 				pctrl.StandardInput.WriteLine("sh /data/local/tmp/screencap.sh");
 			} else {
