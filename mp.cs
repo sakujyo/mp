@@ -288,7 +288,7 @@ namespace ConsoleApp {
 					WriteLog(matchLogFn, string.Format("d2s = {0,6}, macro: {1}", m.D2S(bmp), m.Name));
 				}
 				if (m.IsMatch(bmp, 25000)) {
-					Console.WriteLine("{2}:Match: {0}, {1}", m.Name, m.WaitTime, Name);
+					Console.WriteLine("{2}:Match: {0}, {1}", m.Name, m.WaitTime / 1000d, Name);
 					Tap(m.TapPoint);
 					SetTimeout(m.WaitTime);
 					return;
